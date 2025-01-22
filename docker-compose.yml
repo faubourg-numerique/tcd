@@ -1,0 +1,83 @@
+services:
+    mongo-db:
+        image: "mongo:${MONGO_DB_TAG}"
+        hostname: "mongo-db"
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: "root"
+            MONGO_INITDB_ROOT_PASSWORD: "${MONGO_DB_ROOT_PASSWORD}"
+        restart: "unless-stopped"
+        volumes:
+            - "./volumes/mongo-db:/data/db"
+
+    timescale:
+        image: "timescale/timescaledb-postgis:${TIMESCALE_TAG}"
+        hostname: "timescale"
+        environment:
+            POSTGRES_USER: "orion-ld"
+            POSTGRES_PASSWORD: "${TIMESCALE_ORION_LD_PASSWORD}"
+            POSTGRES_HOST_AUTH_METHOD: "trust"
+        restart: "unless-stopped"
+        volumes:
+            - "./volumes/timescale:/var/lib/postgresql/data"
+
+    mysql:
+        image: "mysql:${MYSQL_TAG}"
+        hostname: "mysql"
+        environment:
+            MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+        restart: "unless-stopped"
+        volumes:
+            - "./volumes/mysql:/var/lib/mysql"
+
+    orion-ld:
+        image: "fiware/orion-ld:${ORION_LD_TAG}"
+        hostname: "orion-ld"
+        ports:
+            - "${ORION_LD_PORT}:1026"
+        environment:
+            ORIONLD_EXPERIMENTAL: "TRUE"
+            ORIONLD_MONGOCONLY: "TRUE"
+            ORIONLD_MONGO_HOST: "mongo-db"
+            ORIONLD_MONGO_USER: "root"
+            ORIONLD_MONGO_PASSWORD: "${MONGO_DB_ROOT_PASSWORD}"
+            ORIONLD_TROE: "TRUE"
+            ORIONLD_TROE_HOST: "timescale"
+            ORIONLD_TROE_USER: "orion-ld"
+            ORIONLD_TROE_PWD: "${TIMESCALE_ORION_LD_PASSWORD}"
+        restart: "unless-stopped"
+        depends_on:
+            - "mongo-db"
+            - "timescale"
+
+    mintaka:
+        image: "fiware/mintaka:${MINTAKA_TAG}"
+        hostname: "mintaka"
+        ports:
+            - "${MINTAKA_PORT}:8080"
+        environment:
+            BASEPATH: "/ngsi-ld/v1"
+            DATASOURCES_DEFAULT_HOST: "timescale"
+            DATASOURCES_DEFAULT_DATABSE: "orion-ld"
+            DATASOURCES_DEFAULT_USERNAME: "orion-ld"
+            DATASOURCES_DEFAULT_PASSWORD: "${TIMESCALE_ORION_LD_PASSWORD}"
+        restart: "unless-stopped"
+        depends_on:
+            - "timescale"
+
+    keyrock:
+        image: "fiware/idm:${KEYROCK_TAG}"
+        hostname: "keyrock"
+        ports:
+            - "${KEYROCK_PORT}:3000"
+        environment:
+            IDM_DB_HOST: "mysql"
+            IDM_DB_USER: "root"
+            IDM_DB_PASS: "${MYSQL_ROOT_PASSWORD}"
+            IDM_ADMIN_EMAIL: "${KEYROCK_ADMIN_EMAIL}"
+            IDM_ADMIN_PASS: "${KEYROCK_ADMIN_PASSWORD}"
+            IDM_CORS_ENABLED: true
+            IDM_CORS_ORIGIN: "*"
+            IDM_CORS_METHODS: "GET"
+        restart: "unless-stopped"
+        depends_on:
+            - "mysql"
