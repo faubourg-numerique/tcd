@@ -1,8 +1,12 @@
 const axios = require("axios");
+const childProcess = require("child_process");
 const dotenv = require("dotenv");
 const extractZip = require("extract-zip");
 const fs = require("fs");
 const path = require("path");
+const util = require("util");
+
+const exec = util.promisify(childProcess.exec);
 
 dotenv.config();
 
@@ -54,6 +58,10 @@ function setEnvConfig(repository, tag, config) {
     fs.writeFileSync(path.join(process.env.WORKING_DIRECTORY, `${repository}-${tag}`, ".env"), data, "utf8")
 }
 
+async function buildDockerImage(repository, tag) {
+    await exec(["sudo", "docker", "build", "-t", `${repository}:${tag}`, path.join(process.env.WORKING_DIRECTORY, `${repository}-${tag}`)].join(" "));
+}
+
 async function main() {
     for (const release of releases) {
         if (isReleaseInstalled(release.repository, release.tag)) {
@@ -65,7 +73,10 @@ async function main() {
 
         console.log(`${release.repository}#${release.tag} Creating environment file…`);
         const config = getEnvExampleConfig(release.repository, release.tag);
-        setEnvConfig(release.repository, release.tag, config)
+        setEnvConfig(release.repository, release.tag, config);
+
+        console.log(`${release.repository}#${release.tag} Building Docker image…`);
+        await buildDockerImage(release.repository, release.tag);
     }
 }
 

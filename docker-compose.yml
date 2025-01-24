@@ -81,3 +81,71 @@ services:
         restart: "unless-stopped"
         depends_on:
             - "mysql"
+
+    tcd-app:
+        image: "tcd-app:${TCD_APP_TAG}"
+        hostname: "tcd-app"
+        restart: "unless-stopped"
+
+    tcd-api:
+        image: "tcd-api:${TCD_API_TAG}"
+        hostname: "tcd-api"
+        restart: "unless-stopped"
+        volumes:
+            - "./tcd-api/.env:/home/node/.env"
+
+    tcd-alert:
+        image: "tcd-alert:${TCD_ALERT_TAG}"
+        hostname: "tcd-alert"
+        restart: "unless-stopped"
+        volumes:
+            - "./tcd-alert/.env:/var/www/html/.env"
+
+    tcd-schedule:
+        image: "tcd-schedule:${TCD_SCHEDULE_TAG}"
+        hostname: "tcd-schedule"
+        restart: "unless-stopped"
+        volumes:
+            - "./tcd-schedule/.env:/home/node/.env"
+
+    tcd-iot-axione:
+        image: "tcd-iot-axione:${TCD_IOT_AXIONE_TAG}"
+        hostname: "tcd-iot-axione"
+        restart: "unless-stopped"
+        volumes:
+            - "./tcd-iot-axione/.env:/var/www/html/.env"
+
+    tcd-iot-axione-downlink:
+        image: "tcd-iot-axione-downlink:${TCD_IOT_AXIONE_DOWNLINK_TAG}"
+        hostname: "tcd-iot-axione-downlink"
+        restart: "unless-stopped"
+        volumes:
+            - "./tcd-iot-axione-downlink/.env:/home/node/.env"
+
+    tcd-thermostat-wot:
+        image: "tcd-thermostat-wot:${TCD_THERMOSTAT_WOT_TAG}"
+        hostname: "tcd-thermostat-wot"
+        restart: "unless-stopped"
+        volumes:
+            - "./tcd-thermostat-wot/.env:/home/node/.env"
+
+    tcd-waste-container-wot:
+        image: "tcd-waste-container-wot:${TCD_WASTE_CONTAINER_WOT_TAG}"
+        hostname: "tcd-waste-container-wot"
+        restart: "unless-stopped"
+        volumes:
+            - "./tcd-waste-container-wot/.env:/home/node/.env"
+
+    tcd-flood-monitoring-wot:
+        image: "tcd-flood-monitoring-wot:${TCD_FLOOD_MONITORING_WOT_TAG}"
+        hostname: "tcd-flood-monitoring-wot"
+        restart: "unless-stopped"
+        volumes:
+            - "./tcd-flood-monitoring-wot/.env:/home/node/.env"
+
+    tcd-streetlight-wot:
+        image: "tcd-streetlight-wot:${TCD_STREETLIGHT_WOT_TAG}"
+        hostname: "tcd-streetlight-wot"
+        restart: "unless-stopped"
+        volumes:
+            - "./tcd-streetlight-wot/.env:/home/node/.env"
