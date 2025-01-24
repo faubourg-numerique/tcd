@@ -14,6 +14,7 @@
 - Orion-LD
 - Mintaka
 - Keyrock
+- Node-RED
 
 - TCD APP
 - TCD API

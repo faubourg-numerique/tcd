@@ -82,6 +82,13 @@ services:
         depends_on:
             - "mysql"
 
+    node-red:
+        image: "nodered/node-red:${NODE_RED_TAG}"
+        hostname: "node-red"
+        restart: "unless-stopped"
+        volumes:
+            - "./volumes/node-red:/data"
+
     tcd-app:
         image: "tcd-app:${TCD_APP_TAG}"
         hostname: "tcd-app"
