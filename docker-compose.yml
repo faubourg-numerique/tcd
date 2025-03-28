@@ -14,11 +14,11 @@ services:
         hostname: "timescale"
         environment:
             POSTGRES_USER: "orion-ld"
-            POSTGRES_PASSWORD: "${TIMESCALE_ORION_LD_PASSWORD}"
+            POSTGRES_PASSWORD: "${TIMESCALE_POSTGRE_SQL_ORION_LD_PASSWORD}"
             POSTGRES_HOST_AUTH_METHOD: "trust"
         restart: "unless-stopped"
         volumes:
-            - "./volumes/timescale:/var/lib/postgresql/data"
+            - "./volumes/timescale-postgre-sql:/var/lib/postgresql/data"
 
     mysql:
         image: "mysql:${MYSQL_TAG}"
@@ -28,6 +28,20 @@ services:
         restart: "unless-stopped"
         volumes:
             - "./volumes/mysql:/var/lib/mysql"
+
+    postgre-sql:
+        image: "postgres:${POSTGRE_SQL_TAG}"
+        hostname: "postgre-sql"
+        ports:
+            - "${POSTGRE_SQL_PORT}:5432"
+        environment:
+            POSTGRES_DB: "postgres"
+            POSTGRES_USER: "postgres"
+            POSTGRES_PASSWORD: "${POSTGRE_SQL_PASSWORD}"
+        restart: "unless-stopped"
+        volumes:
+            - "./volumes/postgre-sql:/var/lib/postgresql/data"
+        shm_size: "128mb"
 
     orion-ld:
         image: "fiware/orion-ld:${ORION_LD_TAG}"
@@ -43,7 +57,7 @@ services:
             ORIONLD_TROE: "TRUE"
             ORIONLD_TROE_HOST: "timescale"
             ORIONLD_TROE_USER: "orion-ld"
-            ORIONLD_TROE_PWD: "${TIMESCALE_ORION_LD_PASSWORD}"
+            ORIONLD_TROE_PWD: "${TIMESCALE_POSTGRE_SQL_ORION_LD_PASSWORD}"
         restart: "unless-stopped"
         depends_on:
             - "mongo-db"
@@ -59,7 +73,7 @@ services:
             DATASOURCES_DEFAULT_HOST: "timescale"
             DATASOURCES_DEFAULT_DATABSE: "orion-ld"
             DATASOURCES_DEFAULT_USERNAME: "orion-ld"
-            DATASOURCES_DEFAULT_PASSWORD: "${TIMESCALE_ORION_LD_PASSWORD}"
+            DATASOURCES_DEFAULT_PASSWORD: "${TIMESCALE_POSTGRE_SQL_ORION_LD_PASSWORD}"
         restart: "unless-stopped"
         depends_on:
             - "timescale"
@@ -85,74 +99,29 @@ services:
     node-red:
         image: "nodered/node-red:${NODE_RED_TAG}"
         hostname: "node-red"
+        ports:
+            - "${NODE_RED_PORT}:1880"
         restart: "unless-stopped"
         volumes:
             - "./volumes/node-red:/data"
 
-    tcd-app:
-        image: "tcd-app:${TCD_APP_TAG}"
-        hostname: "tcd-app"
+    wilma-tcd-api:
+        image: "fiware/pep-proxy:${WILMA_TCD_API_TAG}"
+        hostname: "wilma-tcd-api"
+        ports:
+            - "${WILMA_TCD_API_PORT}:80"
+        environment:
+            DEBUG: "pep-proxy:*"
+            PEP_PROXY_PORT: 80
+            PEP_PROXY_IDM_HOST: "keyrock"
+            PEP_PROXY_IDM_PORT: 3000
+            PEP_PROXY_APP_HOST: "host.docker.internal"
+            PEP_PROXY_APP_PORT: 8200
+            PEP_PROXY_APP_ID: "${WILMA_TCD_API_APP_ID}"
+            PEP_PROXY_USERNAME: "${WILMA_TCD_API_APP_USERNAME}"
+            PEP_PASSWORD: "${WILMA_TCD_API_APP_PASSWORD}"
         restart: "unless-stopped"
-
-    tcd-api:
-        image: "tcd-api:${TCD_API_TAG}"
-        hostname: "tcd-api"
-        restart: "unless-stopped"
-        volumes:
-            - "./tcd-api/.env:/home/node/.env"
-
-    tcd-alert:
-        image: "tcd-alert:${TCD_ALERT_TAG}"
-        hostname: "tcd-alert"
-        restart: "unless-stopped"
-        volumes:
-            - "./tcd-alert/.env:/var/www/html/.env"
-
-    tcd-schedule:
-        image: "tcd-schedule:${TCD_SCHEDULE_TAG}"
-        hostname: "tcd-schedule"
-        restart: "unless-stopped"
-        volumes:
-            - "./tcd-schedule/.env:/home/node/.env"
-
-    tcd-iot-axione:
-        image: "tcd-iot-axione:${TCD_IOT_AXIONE_TAG}"
-        hostname: "tcd-iot-axione"
-        restart: "unless-stopped"
-        volumes:
-            - "./tcd-iot-axione/.env:/var/www/html/.env"
-
-    tcd-iot-axione-downlink:
-        image: "tcd-iot-axione-downlink:${TCD_IOT_AXIONE_DOWNLINK_TAG}"
-        hostname: "tcd-iot-axione-downlink"
-        restart: "unless-stopped"
-        volumes:
-            - "./tcd-iot-axione-downlink/.env:/home/node/.env"
-
-    tcd-thermostat-wot:
-        image: "tcd-thermostat-wot:${TCD_THERMOSTAT_WOT_TAG}"
-        hostname: "tcd-thermostat-wot"
-        restart: "unless-stopped"
-        volumes:
-            - "./tcd-thermostat-wot/.env:/home/node/.env"
-
-    tcd-waste-container-wot:
-        image: "tcd-waste-container-wot:${TCD_WASTE_CONTAINER_WOT_TAG}"
-        hostname: "tcd-waste-container-wot"
-        restart: "unless-stopped"
-        volumes:
-            - "./tcd-waste-container-wot/.env:/home/node/.env"
-
-    tcd-flood-monitoring-wot:
-        image: "tcd-flood-monitoring-wot:${TCD_FLOOD_MONITORING_WOT_TAG}"
-        hostname: "tcd-flood-monitoring-wot"
-        restart: "unless-stopped"
-        volumes:
-            - "./tcd-flood-monitoring-wot/.env:/home/node/.env"
-
-    tcd-streetlight-wot:
-        image: "tcd-streetlight-wot:${TCD_STREETLIGHT_WOT_TAG}"
-        hostname: "tcd-streetlight-wot"
-        restart: "unless-stopped"
-        volumes:
-            - "./tcd-streetlight-wot/.env:/home/node/.env"
+        depends_on:
+            - "keyrock"
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
